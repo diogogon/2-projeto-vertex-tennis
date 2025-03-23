@@ -4,12 +4,12 @@
 ### Objetivo do Documento:
 O objetivo do documento é fornecer uma visão clara e detalhada sobre todos os aspectos essenciais do projeto. Isso inclui definir as metas e objetivos do dashboard, descrever os requisitos funcionais e não funcionais, estabelecer os usuários-alvo e suas necessidades específicas, delinear o escopo do projeto, identificar os recursos e tecnologias a serem utilizados.
 
-### Justificativa do Projeto: um esforço que não deveria ser necessário. Isso representa um custo de oportunidade significativo, já que esse tempo poderia ser melhor utilizado em atividades mais estratégicas.
-A atual abordagem de análise de dados da Vertex Tennis demanda uma quantidade significativa de tempo e recursos da equipe, o que, ao longo do tempo, tem se mostrado ineficiente. Esse processo manual e dispendioso tem gerado uma sobrecarga de trabalho, desviando o foco das tarefas mais estratégicas e de maior valor agregado. Em vez de utilizar esse tempo para melhorar operações, desenvolver novas soluções ou promover inovação, a equipe está frequentemente envolvida em tarefas repetitivas e operacionais, prejudicando a produtividade global da organização.
+### Justificativa do Projeto:
+A abordagem atual de análise de dados da Vertex Tennis tem se mostrado ineficiente, pois os analistas não conseguem cumprir adequadamente suas funções devido à sobrecarga de trabalho. Isso ocorre porque grande parte do tempo deles é dedicada à criação manual de relatórios, impedindo o foco em atividades analíticas.
 
-Além disso, a análise manual de dados pode levar a erros, inconsistências e uma visão fragmentada das informações, dificultando a obtenção de insights precisos e rápidos. Isso compromete a tomada de decisões, que fica mais dependente da intuição ou de processos ad-hoc, ao invés de ser orientada por dados sólidos e estratégias bem definidas. Como consequência, a capacidade de identificar tendências, prever cenários e ajustar operações de forma ágil e eficiente é comprometida.
+Vale ressaltar, que uma das principais dificuldades associadas ao trabalho manual é o aumento significativo do risco de erros e inconsistências nos dados. Isso ocorre por diversas razões, como, por exemplo, a inserção de dados em planilhas, a atualização de sistemas ou a coleta de informações de diferentes fontes, que frequentemente apresentam formatos e estruturas distintas. Esses processos manuais aumentam a probabilidade de falhas humanas.
 
-O projeto visa, portanto, otimizar processos e apoiar decisões mais eficazes, alinhadas aos objetivos da empresa como a criação de campanhas comerciais, a redução de custos operacionais e a personalização da experiência do cliente.
+O projeto tem como objetivo otimizar esses processos, proporcionando um suporte mais eficiente para a tomada de decisões estratégicas. Isso está alinhado aos principais objetivos da empresa, como o desenvolvimento de campanhas comerciais mais assertivas, redução de custos operacionais e melhoria na qualidade das apresentações dos gestores.
 
 ### Responsabilidades das funções:
 Diogo Gonçalves (eu): como *Analista de dados*, fui responsável por todas as etapas do projeto: coleta e ingestão de dados, estruturação e modelagem dos dados, Design, DataViz, documentação do projeto, desenvolvimento de funcionalidades analíticas (Regras e Cálculos) e publicação.
