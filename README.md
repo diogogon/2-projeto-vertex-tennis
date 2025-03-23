@@ -9,28 +9,47 @@ A abordagem atual de análise de dados da Vertex Tennis tem se mostrado ineficie
 
 Vale ressaltar, que uma das principais dificuldades associadas ao trabalho manual é o aumento significativo do risco de erros e inconsistências nos dados. Isso ocorre por diversas razões, como, por exemplo, a inserção de dados em planilhas, a atualização de sistemas ou a coleta de informações de diferentes fontes, que frequentemente apresentam formatos e estruturas distintas. Esses processos manuais aumentam a probabilidade de falhas humanas.
 
-O projeto tem como objetivo otimizar esses processos, proporcionando um suporte mais eficiente para a tomada de decisões estratégicas. Isso está alinhado aos principais objetivos da empresa, como o desenvolvimento de campanhas comerciais mais assertivas, redução de custos operacionais e melhoria na qualidade das apresentações dos gestores.
+Nesse cenário, é evidente que a implementação de uma solução de análise de dados mais eficiente e integrada se faz essencial para otimizar o trabalho da equipe, reduzir os riscos de erros e garantir uma análise mais assertiva e ágil.
 
 ### Responsabilidades das funções:
 Diogo Gonçalves (eu): como *Analista de dados*, fui responsável por todas as etapas do projeto: coleta e ingestão de dados, estruturação e modelagem dos dados, Design, DataViz, documentação do projeto, desenvolvimento de funcionalidades analíticas (Regras e Cálculos) e publicação.
 
 ### Escopo:  
 #### 🎯 Objetivo:
-O objetivo desse projeto é fornecer, por meio de um painel, uma visão clara e analítica das informações
+Dada a complexidade e os desafios na utilização dos dados disponíveis, o objetivo deste projeto é fornecer, por meio de uma solução analítica, uma visão clara e integrada das informações financeiras e operacionais essenciais para o negócio. Isso fortalecerá a capacidade da empresa de antecipar tendências, responder rapidamente aos desafios do mercado e, assim, promover o crescimento e a competitividade no setor.
 
 #### 🫂 Público-Alvo:  
-Pessoas interessadas
+Diretoria, Gerentes e Analistas de dados da Vertex Tennis.
 
-#### 🗓️ Recorrência:  
-Toda segunda-feira às 8 horas.
+#### 🗓️ Recorrência de Atualização:  
+Diariamente ao meio dia.
 
 #### 📗 Descrição:  
 
-*A) Ingestão de Dados*: processo de coletar dados diretamente das fontes de origem, sem aplicar filtros, para garantir a integridade e a abrangência das informações.
-*B) Integração de Dados*: etapa de integrar e combinar múltiplas fontes de dados. Esse processo, que será realizado localmente 
-*C) Transformação de Dados*: focaremos no processo de uniformização de formatos e unidades, seleção e filtragem dos dados relevantes. Essas atividades serão realizadas continuamente no Power Query do Power BI.  
+*A) Ingestão de Dados*: processo para estabelecer a conexão entre as pastas de arquivos Excel e a plataforma de análise, garantindo que as informações sejam importadas de maneira eficiente e precisa para posterior processamento e análise.
+1. Setor Vendas: Nome padronizado dos arquivos: Acompanhamento_Comercial_jan/2025.xlsx. Eles contêm 3 abas: a) Registro histórico das vendas, b) Cadastro de produto e c) Depara de Subcategorias.
+2. Setor Importação: Nome padronizado dos arquivos: Importacoes_FornecedorA.xlsx. Nesse caso, os arquivos possuem uma infinidade de abas indicando as informações de cada Trimestre/Ano.
 
-1. Power BI:
+*B) Transformação de Dados*: focaremos no processo de uniformização de formatos e unidades, seleção e filtragem dos dados relevantes. Essas atividades serão realizadas continuamente no Power Query do Power BI.  
+
+1. Desafio de Conversão USD para BRL/BRB: Os preços dos produtos estão inicialmente definidos em dólares, e para realizar a conversão dinâmica para reais, estabelecemos uma conexão com a API do [Banco Central do Brasil](https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios/resource/22ab054c-b3ff-4864-82f7-b2815c7a77ec?inner_span=True). Isso nos permite obter as taxas de câmbio mais atualizadas. Abaixo está o cerne das etapas em M.
+```M
+let
+    Data_Atual = Date.ToText(#date(Date.Year(DateTime.LocalNow()), Date.Month(DateTime.LocalNow()), Date.Day(DateTime.LocalNow())), "MM-dd-yyyy"),
+    Data_Min = Date.ToText(Date.AddMonths(p_Data_Min, -1), "MM-dd-yyyy"),
+    Fonte = Json.Document(Web.Contents("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='"&Data_Min&"'&@dataFinalCotacao='"&Data_Atual&"'&&$format=json&$select=cotacaoCompra,dataHoraCotacao")),
+    #"Convertido para Tabela" = Table.FromRecords({Fonte}),
+```
+2. Função Personalizada M: empilhar os arquivos de importação de forma eficiente. Indicarei o processo mais fácil para familiarizar o processo.
+
+4. Modelagem de dados: adotação da abordagem de modelo estrela, que organiza os dados em tabelas de fatos e dimensões para otimizar o processo de análise. As tabelas de fato serão responsáveis por armazenar os dados quantitativos e transacionais, enquanto as tabelas de dimensão fornecerão as informações contextuais necessárias para a análise.
+
+As principais tabelas serão:
+a) fact_Vendas: Registra as transações de vendas realizadas.
+b) fact_Importação: Armazena os dados relacionados ao processo de importação de produtos.
+c) dim_Produto: Contém informações sobre os produtos, como categorias e características.
+d) dim_Clientes: Registra dados sobre os clientes, como localização e perfil.
+e) dim_Fornecedores: Registra dados sobre os fornecedores.
 
 *D) DataViz*: processo de construção de layout, design visual e visualizações adequadas para os dados. Todo o design foi feito no Figma e, para este projeto pessoal, foi interessante seguir os padrões estabelecidos pela [identidade visual](https://vertextennis.com/sobre/) da Vertex Tennis, tanto para as cores como para a marca.
 
