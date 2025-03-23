@@ -38,20 +38,57 @@ let
     Data_Atual = Date.ToText(#date(Date.Year(DateTime.LocalNow()), Date.Month(DateTime.LocalNow()), Date.Day(DateTime.LocalNow())), "MM-dd-yyyy"),
     Data_Min = Date.ToText(Date.AddMonths(p_Data_Min, -1), "MM-dd-yyyy"),
     Fonte = Json.Document(Web.Contents("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='"&Data_Min&"'&@dataFinalCotacao='"&Data_Atual&"'&&$format=json&$select=cotacaoCompra,dataHoraCotacao")),
-    #"Convertido para Tabela" = Table.FromRecords({Fonte}),
+    #"Convertido para Tabela" = Table.FromRecords({Fonte})
 ```
-2. Função Personalizada M: empilhar os arquivos de importação de forma eficiente. Indicarei o processo mais fácil para familiarizar o processo.
+2. Empilhamento eficiente dos Arquivos de Importação (Função): Para lidar com múltiplos fornecedores e otimizar o empilhamento dos dados, precisamos de uma abordagem mais avançada do que simplesmente expandir o campo Content. Em vez de empilhar diretamente os dados, vamos criar uma função personalizada que facilitará esse processo.
 
-4. Modelagem de dados: adotação da abordagem de modelo estrela, que organiza os dados em tabelas de fatos e dimensões para otimizar o processo de análise. As tabelas de fato serão responsáveis por armazenar os dados quantitativos e transacionais, enquanto as tabelas de dimensão fornecerão as informações contextuais necessárias para a análise.
+O código abaixo serve como ponto de partida para essa função. Inicialmente, vamos simular que estamos trabalhando apenas com o FornecedorA (3ª linha). A partir desse momento, avançaremos até antes de expandir o conteúdo, preparando a base para lidar com os dados de forma organizada e controlada.
+```M
+let
+    #"Pasta dos Arquivos"  = Folder.Files(aux_Folder_Imp),
+    #"Mantém Conteúdo e Fornecedores" = Table.SelectColumns(#"Pasta dos Arquivos",{"Name", "Content"}),
+    #"Linhas Filtradas" = Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")),
+    #"Arquivo do Fornecedor" = #"Linhas Filtradas"{0}[Content],
+    #"Conteúdo do Arquivo" = Excel.Workbook(#"Arquivo do Fornecedor"),
+    #"Seleção dos Trimestres" = Table.SelectRows(#"Conteúdo do Arquivo", each ([Kind] = "Sheet")),
+    #"Remove o Excesso" = Table.RemoveColumns(#"Seleção dos Trimestres",{"Item", "Kind", "Hidden"})
+in
+    #"Remove o Excesso"
+```
+Agora, clique com o botão direito na consulta e transforme-a em uma função. Isso irá adicionar uma linha no início do código com os parâmetros necessários, que no nosso caso é apenas o diretório dos arquivos, chamado aux_Folder_Imp. A linha gerada será algo como: (aux_Folder_Imp as any) => let. 
 
-As principais tabelas serão:
-a) fact_Vendas: Registra as transações de vendas realizadas.
-b) fact_Importação: Armazena os dados relacionados ao processo de importação de produtos.
-c) dim_Produto: Contém informações sobre os produtos, como categorias e características.
-d) dim_Clientes: Registra dados sobre os clientes, como localização e perfil.
-e) dim_Fornecedores: Registra dados sobre os fornecedores.
+Seguindo nosso processo, precisamos automatizar o processo para incluir outros fornecedores. Lembre-se de que, na primeira etapa, filtramos um único fornecedor para realizar o processo inicial. Vamos modificar esse filtro para operar a nível de linha da tabela. No código atual, temos a seguinte linha para filtrar o fornecedor específico:
+=> Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")
+Para automatizar, vamos substituí-los por variáveis dinâmicas: Tabela ocupada por "Mantém Conteúdo e Fornecedores" e SupplierID ocupado por "Importacoes_FornecedorA.xlsx".
+```M
+let
+    Fonte = (SupplierID as text, Tabela as table) =>
+    let
+        #"Linhas Filtradas" = Table.SelectRows(Tabela, each ([Name] = SupplierID)),
+        #"Arquivo do Fornecedor" = #"Linhas Filtradas"{0}[Content],
+        #"Conteúdo do Arquivo" = Excel.Workbook(#"Arquivo do Fornecedor"),
+        #"Seleção dos Trimestres" = Table.SelectRows(#"Conteúdo do Arquivo", each ([Kind] = "Sheet")),
+        #"Remove o Excesso" = Table.RemoveColumns(#"Seleção dos Trimestres",{"Item", "Kind", "Hidden"})
+    in
+    #"Remove o Excesso"
+in
+    Fonte
+```
+Para finalizar, basta construir uma consulta principal para os arquivos de importação e Invocar Função Personalizada. Será pedido dois itens (SupplierID e Tabela). No SupplierID, coloque o campo Content e em Tabela coloque qualquer uma que tiver disponível, mas depois troque, na barra de fórmulas, para sua etapa anterior. E pronto, vai empilhar todos os trimestres para cada fornecedor.
 
-*D) DataViz*: processo de construção de layout, design visual e visualizações adequadas para os dados. Todo o design foi feito no Figma e, para este projeto pessoal, foi interessante seguir os padrões estabelecidos pela [identidade visual](https://vertextennis.com/sobre/) da Vertex Tennis, tanto para as cores como para a marca.
+3. Modelagem de dados: Adoção da abordagem de modelo estrela, que organiza os dados em tabelas de fatos e dimensões para otimizar o processo de análise. As tabelas de fato serão responsáveis por armazenar os dados quantitativos e transacionais, enquanto as tabelas de dimensão fornecerão as informações contextuais necessárias para a análise. As principais tabelas serão:
+
+    i) fact_Vendas: Registra as transações de vendas realizadas.
+   
+    ii) fact_Importação: Armazena os dados relacionados ao processo de importação de produtos.
+   
+    iii) dim_Produto: Contém informações sobre os produtos, como categorias e características.
+   
+    iv) dim_Clientes: Registra dados sobre os clientes, como localização e perfil.
+   
+    v) dim_Fornecedores: Registra dados sobre os fornecedores.
+
+*D) DataViz*: processo de construção de layout, design visual e visualizações adequadas para os dados. Todo o design foi feito no Figma e, para este projeto, foi necessário seguir os padrões estabelecidos pela [identidade visual](https://vertextennis.com/sobre/) da Vertex Tennis, tanto para as cores como para a marca.
 
 #### ⚙️ Fontes:  
 
