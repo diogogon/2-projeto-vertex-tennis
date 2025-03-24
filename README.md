@@ -78,14 +78,10 @@ Diariamente ao meio dia.
 
 3. Modelagem de dados: Adoção da abordagem de modelo estrela, que organiza os dados em tabelas de fatos e dimensões para otimizar o processo de análise. As tabelas de fato serão responsáveis por armazenar os dados quantitativos e transacionais, enquanto as tabelas de dimensão fornecerão as informações contextuais necessárias para a análise. As principais tabelas serão:
 
-    i) fact_Vendas: Registra as transações de vendas realizadas.
-   
-    ii) fact_Importação: Armazena os dados relacionados ao processo de importação de produtos.
-   
-    iii) dim_Produto: Contém informações sobre os produtos, como categorias e características.
-   
-    iv) dim_Clientes: Registra dados sobre os clientes, como localização e perfil.
-   
+    i) fact_Vendas: Registra as transações de vendas realizadas.  
+    ii) fact_Importação: Armazena os dados relacionados ao processo de importação de produtos.  
+    iii) dim_Produto: Contém informações sobre os produtos, como categorias e características.  
+    iv) dim_Clientes: Registra dados sobre os clientes, como localização e perfil.  
     v) dim_Fornecedores: Registra dados sobre os fornecedores.
 
 *D) DataViz*: processo de construção de layout, design visual e visualizações adequadas para os dados. Todo o design foi feito no Figma e, para este projeto, foi necessário seguir os padrões estabelecidos pela [identidade visual](https://vertextennis.com/sobre/) da Vertex Tennis, tanto para as cores como para a marca.
