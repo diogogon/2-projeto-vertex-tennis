@@ -33,48 +33,48 @@ Diariamente ao meio dia.
 *B) Transformação de Dados*: focaremos no processo de uniformização de formatos e unidades, seleção e filtragem dos dados relevantes. Essas atividades serão realizadas continuamente no Power Query do Power BI.  
 
 1. Desafio de Conversão USD para BRL/BRB: Os preços dos produtos estão inicialmente definidos em dólares, e para realizar a conversão dinâmica para reais, estabelecemos uma conexão com a API do [Banco Central do Brasil](https://dadosabertos.bcb.gov.br/dataset/dolar-americano-usd-todos-os-boletins-diarios/resource/22ab054c-b3ff-4864-82f7-b2815c7a77ec?inner_span=True). Isso nos permite obter as taxas de câmbio mais atualizadas. Abaixo está o cerne das etapas em M.
-```M
-let
-    Data_Atual = Date.ToText(#date(Date.Year(DateTime.LocalNow()), Date.Month(DateTime.LocalNow()), Date.Day(DateTime.LocalNow())), "MM-dd-yyyy"),
-    Data_Min = Date.ToText(Date.AddMonths(p_Data_Min, -1), "MM-dd-yyyy"),
-    Fonte = Json.Document(Web.Contents("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='"&Data_Min&"'&@dataFinalCotacao='"&Data_Atual&"'&&$format=json&$select=cotacaoCompra,dataHoraCotacao")),
-    #"Convertido para Tabela" = Table.FromRecords({Fonte})
-```
+    ```M
+    let
+        Data_Atual = Date.ToText(#date(Date.Year(DateTime.LocalNow()), Date.Month(DateTime.LocalNow()), Date.Day(DateTime.LocalNow())), "MM-dd-yyyy"),
+        Data_Min = Date.ToText(Date.AddMonths(p_Data_Min, -1), "MM-dd-yyyy"),
+        Fonte = Json.Document(Web.Contents("https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='"&Data_Min&"'&@dataFinalCotacao='"&Data_Atual&"'&&$format=json&$select=cotacaoCompra,dataHoraCotacao")),
+        #"Convertido para Tabela" = Table.FromRecords({Fonte})
+    ```
 2. Empilhamento eficiente dos Arquivos de Importação (Função): Para lidar com múltiplos fornecedores e otimizar o empilhamento dos dados, precisamos de uma abordagem mais avançada do que simplesmente expandir o campo Content. Em vez de empilhar diretamente os dados, vamos criar uma função personalizada que facilitará esse processo.
 
-O código abaixo serve como ponto de partida para essa função. Inicialmente, vamos simular que estamos trabalhando apenas com o FornecedorA (3ª linha). A partir desse momento, avançaremos até antes de expandir o conteúdo, preparando a base para lidar com os dados de forma organizada e controlada.
-```m
-let
-    #"Pasta dos Arquivos"  = Folder.Files(aux_Folder_Imp),
-    #"Mantém Conteúdo e Fornecedores" = Table.SelectColumns(#"Pasta dos Arquivos",{"Name", "Content"}),
-    #"Linhas Filtradas" = Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")),
-    #"Arquivo do Fornecedor" = #"Linhas Filtradas"{0}[Content],
-    #"Conteúdo do Arquivo" = Excel.Workbook(#"Arquivo do Fornecedor"),
-    #"Seleção dos Trimestres" = Table.SelectRows(#"Conteúdo do Arquivo", each ([Kind] = "Sheet")),
-    #"Remove o Excesso" = Table.RemoveColumns(#"Seleção dos Trimestres",{"Item", "Kind", "Hidden"})
-in
-    #"Remove o Excesso"
-```
-Agora, clique com o botão direito na consulta e transforme-a em uma função. Isso irá adicionar uma linha no início do código com os parâmetros necessários, que no nosso caso é apenas o diretório dos arquivos, chamado aux_Folder_Imp. A linha gerada será algo como: (aux_Folder_Imp as any) => let. 
-
-Seguindo nosso processo, precisamos automatizar o processo para incluir outros fornecedores. Lembre-se de que, na primeira etapa, filtramos um único fornecedor para realizar o processo inicial. Vamos modificar esse filtro para operar a nível de linha da tabela. No código atual, temos a seguinte linha para filtrar o fornecedor específico:
-=> Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")
-Para automatizar, vamos substituí-los por variáveis dinâmicas: Tabela ocupada por "Mantém Conteúdo e Fornecedores" e SupplierID ocupado por "Importacoes_FornecedorA.xlsx".
-```m
-let
-    Fonte = (SupplierID as text, Tabela as table) =>
+    O código abaixo serve como ponto de partida para essa função. Inicialmente, vamos simular que estamos trabalhando apenas com o FornecedorA (3ª linha). A partir desse momento, avançaremos até antes de expandir o conteúdo, preparando a base para lidar com os dados de forma organizada e controlada.
+    ```m
     let
-        #"Linhas Filtradas" = Table.SelectRows(Tabela, each ([Name] = SupplierID)),
+        #"Pasta dos Arquivos"  = Folder.Files(aux_Folder_Imp),
+        #"Mantém Conteúdo e Fornecedores" = Table.SelectColumns(#"Pasta dos Arquivos",{"Name", "Content"}),
+        #"Linhas Filtradas" = Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")),
         #"Arquivo do Fornecedor" = #"Linhas Filtradas"{0}[Content],
         #"Conteúdo do Arquivo" = Excel.Workbook(#"Arquivo do Fornecedor"),
         #"Seleção dos Trimestres" = Table.SelectRows(#"Conteúdo do Arquivo", each ([Kind] = "Sheet")),
         #"Remove o Excesso" = Table.RemoveColumns(#"Seleção dos Trimestres",{"Item", "Kind", "Hidden"})
     in
-    #"Remove o Excesso"
-in
-    Fonte
-```
-Para finalizar, basta construir uma consulta principal para os arquivos de importação e Invocar Função Personalizada. Será pedido dois itens (SupplierID e Tabela). No SupplierID, coloque o campo Content e em Tabela coloque qualquer uma que tiver disponível, mas depois troque, na barra de fórmulas, para sua etapa anterior. E pronto, vai empilhar todos os trimestres para cada fornecedor.
+        #"Remove o Excesso"
+    ```
+    Agora, clique com o botão direito na consulta e transforme-a em uma função. Isso irá adicionar uma linha no início do código com os parâmetros necessários, que no nosso caso é apenas o diretório dos arquivos, chamado aux_Folder_Imp. A linha gerada será algo como: (aux_Folder_Imp as any) => let. 
+    
+    Seguindo nosso processo, precisamos automatizar o processo para incluir outros fornecedores. Lembre-se de que, na primeira etapa, filtramos um único fornecedor para realizar o processo inicial. Vamos modificar esse filtro para operar a nível de linha da tabela. No código atual, temos a seguinte linha para filtrar o fornecedor específico:
+    => Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")
+    Para automatizar, vamos substituí-los por variáveis dinâmicas: Tabela ocupada por "Mantém Conteúdo e Fornecedores" e SupplierID ocupado por "Importacoes_FornecedorA.xlsx".
+    ```m
+    let
+        Fonte = (SupplierID as text, Tabela as table) =>
+        let
+            #"Linhas Filtradas" = Table.SelectRows(Tabela, each ([Name] = SupplierID)),
+            #"Arquivo do Fornecedor" = #"Linhas Filtradas"{0}[Content],
+            #"Conteúdo do Arquivo" = Excel.Workbook(#"Arquivo do Fornecedor"),
+            #"Seleção dos Trimestres" = Table.SelectRows(#"Conteúdo do Arquivo", each ([Kind] = "Sheet")),
+            #"Remove o Excesso" = Table.RemoveColumns(#"Seleção dos Trimestres",{"Item", "Kind", "Hidden"})
+        in
+        #"Remove o Excesso"
+    in
+        Fonte
+    ```
+    Para finalizar, basta construir uma consulta principal para os arquivos de importação e Invocar Função Personalizada. Será pedido dois itens (SupplierID e Tabela). No SupplierID, coloque o campo Content e em Tabela coloque qualquer uma que tiver disponível, mas depois troque, na barra de fórmulas, para sua etapa anterior. E pronto, vai empilhar todos os trimestres para cada fornecedor.
 
 3. Modelagem de dados: Adoção da abordagem de modelo estrela, que organiza os dados em tabelas de fatos e dimensões para otimizar o processo de análise. As tabelas de fato serão responsáveis por armazenar os dados quantitativos e transacionais, enquanto as tabelas de dimensão fornecerão as informações contextuais necessárias para a análise. As principais tabelas serão:
 
@@ -110,17 +110,34 @@ Para finalizar, basta construir uma consulta principal para os arquivos de impor
 2. Os arquivos disponibilizados não podem sofrer alterações de nomenclatura ou metadados por causa de requisitos de integridade e rastreabilidade, que são essenciais para garantir as etapas no power query.
 
 ### Regras de Negócio:
-1. Métricas do Balanço Patrimonial:
-```dax
-
+1. Métricas Base
+```dax:
+Custo Unitário Real: Com base nos custos de compra registrado na importação correspondente, considerar sempre a data da última compra disponível para calcular o custo unitário real.
+COGS: Custo Unitário Real * Quantidade Vendida
+Receita Líquida: Receita Bruta (Faturamento) - Descontos
+Lucro Bruto: Receita Líquida - COGS
+Margem Bruta: Lucro Bruto / Receita Líquida
 ```
-2. Métricas da Demonstração do Resultado do Exercício:
+1. Métricas de Clientes:
 ```dax
-
+Clientes Novos = Aqueles que realizaram sua primeira compra no período analisado;
+Clientes Antigos = Aqueles que já compraram em períodos passados e também comparam no período analisado, demonstrando fidelidade;
+Clientes Sem Compra: Aqueles que não realizaram compras no período, indicando possível perda de engajamento.
 ```
-3. Indicadores financeiros:
+2. Métricas de Estoque:
 ```dax
-
+Saldo de Estoque ao Longo do Tempo: Combinar os dados de vendas e compras para determinar os saldos de estoque por produto ao longo do tempo.
+Giro de Estoque: Medir quantas vezes o estoque foi renovado (ou girado) durante um período (Giro = Quantidade Vendida no Período / Estoque Médio)
+Estoque Médio: (Estoque inicial + Estoque Final)/2
+Estoque de Segurança: Calcular um estoque mínimo necessário para proteger contra variações na demanda ou atrasos no reabastecimento (SS = Nivel de Serviço (1,65 para 95% de confiança) * σ Demanda Diária * √ Lead Time )
+Ponto de Reposição: Momento exato em que um novo pedido deve ser feito para evitar rupturas no estoque (ROP = Demanda Média Diária * Lead Time + SS)
 ```
+4. Métricas de Segmentação:
+```dax
+Segmentação dos Níveis de Estoque: a) Ruptura: Estoque final zero ou negativo; b) Crítico: Estoque final abaixo do estoque de segurança; c) Ponto de Pedido: Estoque final abaixo do ponto de reposição; e d) Estoque Alto: Estoque acima do ponto de reposição;
+Segmentação ABC: A: Itens que acumulam até 70% da margem bruta; B: Itens entre 70% e 90% da margem bruta; e C: Itens com os 10% restantes da margem bruta;
+Segmentação TOPN: Seleção dinâmica de um número Top N de famílias de produtos.
+```
+
 ### Considerações Finais
 Estou aberto a dúvidas e sugestões adicionais para garantir que o dashboard atenda plenamente às suas necessidades e expectativas do projeto.
