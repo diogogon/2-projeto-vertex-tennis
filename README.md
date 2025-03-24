@@ -43,7 +43,7 @@ let
 2. Empilhamento eficiente dos Arquivos de Importação (Função): Para lidar com múltiplos fornecedores e otimizar o empilhamento dos dados, precisamos de uma abordagem mais avançada do que simplesmente expandir o campo Content. Em vez de empilhar diretamente os dados, vamos criar uma função personalizada que facilitará esse processo.
 
 O código abaixo serve como ponto de partida para essa função. Inicialmente, vamos simular que estamos trabalhando apenas com o FornecedorA (3ª linha). A partir desse momento, avançaremos até antes de expandir o conteúdo, preparando a base para lidar com os dados de forma organizada e controlada.
-```M
+```m
 let
     #"Pasta dos Arquivos"  = Folder.Files(aux_Folder_Imp),
     #"Mantém Conteúdo e Fornecedores" = Table.SelectColumns(#"Pasta dos Arquivos",{"Name", "Content"}),
@@ -60,7 +60,7 @@ Agora, clique com o botão direito na consulta e transforme-a em uma função. I
 Seguindo nosso processo, precisamos automatizar o processo para incluir outros fornecedores. Lembre-se de que, na primeira etapa, filtramos um único fornecedor para realizar o processo inicial. Vamos modificar esse filtro para operar a nível de linha da tabela. No código atual, temos a seguinte linha para filtrar o fornecedor específico:
 => Table.SelectRows(#"Mantém Conteúdo e Fornecedores", each ([Name] = "Importacoes_FornecedorA.xlsx")
 Para automatizar, vamos substituí-los por variáveis dinâmicas: Tabela ocupada por "Mantém Conteúdo e Fornecedores" e SupplierID ocupado por "Importacoes_FornecedorA.xlsx".
-```M
+```m
 let
     Fonte = (SupplierID as text, Tabela as table) =>
     let
@@ -91,12 +91,23 @@ Para finalizar, basta construir uma consulta principal para os arquivos de impor
 *D) DataViz*: processo de construção de layout, design visual e visualizações adequadas para os dados. Todo o design foi feito no Figma e, para este projeto, foi necessário seguir os padrões estabelecidos pela [identidade visual](https://vertextennis.com/sobre/) da Vertex Tennis, tanto para as cores como para a marca.
 
 #### ⚙️ Fontes:  
+1. Coleção de Arquivos de Vendas. Modelo: Acompanhamento_Comercial_jan/2025.xlsx;
+2. Coleção de Arquivos de Importação. Modelo: Importacoes_FornecedorA.xlsx.
 
 ### Exclusões:
+1. A empresa atualmente trabalha apenas com excel e não possui um banco de dados com maturidade suficiente para suportar decisões estratégicas;
+2. O campo de custo médio dos produtos no cadastro é ineficaz para a dinâmica do mercado.
 
 ### Premissas:
+1. O projeto considerará as informações consolidadas e trimestrais dos arquivos;
+2. Visualização de Dados, Ingestão de Dados e ETL no Power BI;
+3. A conversão do dólar deve ser acompahada pelo mercado;
+4. O COGS será calculado com base nos custos das fichas de importação;
+5. Inclusão de visual específico utilizado frequentemente em reuniões (Requisição do gerente comercial)
 
 ### Inconsistências e observações:
+1. O COGS é calculado a nível trimestral, mas para incorporá-los nas vendas devem ser vinculados às datas de ordem de pedido. Isso significa que os valores irão se repetir até a nova ocorrência nas fichas;
+2. Os arquivos disponibilizados não podem sofrer alterações de nomenclatura ou metadados por causa de requisitos de integridade e rastreabilidade, que são essenciais para garantir as etapas no power query.
 
 ### Regras de Negócio:
 1. Métricas do Balanço Patrimonial:
